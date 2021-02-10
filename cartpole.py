@@ -138,13 +138,14 @@ class CartPoleAgent(object):
 
 
 class MCTSAgent(object):
-    def __init__(self, time_budget, debug):
+    def __init__(self, time_budget, debug, environment):
         self.agenttype = 'mcts'
         self.time_budget = time_budget
         self.debug = debug
+        self.environment = environment
 
-    def act(self, params, node, all_nodes, C_p, lookahead_target, env):
-        return UctSearch(params, self.time_budget, node=node, all_nodes=all_nodes, C_p=C_p, lookahead_target=lookahead_target)
+    def act(self, params, n_actions, node, all_nodes, C_p, lookahead_target):
+        return UctSearch(params, n_actions, self.environment, self.time_budget, node=node, all_nodes=all_nodes, C_p=C_p, lookahead_target=lookahead_target)
 
 
 if __name__ == '__main__':
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     ITERATION_BUDGET = 4000
     LOOKAHEAD_TARGET = 50
     DEBUG = False
-    agent = MCTSAgent(ITERATION_BUDGET, DEBUG)
+    agent = MCTSAgent(ITERATION_BUDGET, DEBUG, ENVIRONMENT)
 
     episode_count = 1
     TIMESTR = time.strftime("%Y%m%d-%H%M%S")
@@ -200,7 +201,7 @@ if __name__ == '__main__':
                 env.render()
                 rec.capture_frame()
                 action, node, all_nodes, C_p = agent.act(
-                    env.state, node=node, all_nodes=all_nodes, C_p=C_p, lookahead_target=LOOKAHEAD_TARGET, env=env)
+                    env.state, n_actions=env.action_space.n, node=node, all_nodes=all_nodes, C_p=C_p, lookahead_target=LOOKAHEAD_TARGET)
                 ob, reward, done, _ = env.step(action)
                 print("### 101 observed state: ", ob)
                 print("### 201 C_p: ", C_p)
