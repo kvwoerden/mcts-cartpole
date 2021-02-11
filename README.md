@@ -18,6 +18,8 @@ Next, start run the agent as follows:
 	$ python cartpole.py
 ```
 
+To quit the run early, use `Ctrl-C`. A video of the run will be saved in `./video`.
+
 # Example
 
 ![Example run](img/example.gif)
