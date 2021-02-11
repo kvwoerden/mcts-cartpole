@@ -1,4 +1,6 @@
-import time
+# ---------------------------------------------------------------------------- #
+#                                    Imports                                   #
+# ---------------------------------------------------------------------------- #
 import random
 import math
 import itertools
@@ -7,9 +9,16 @@ import numpy as np
 
 import gym
 
+
+# ---------------------------------------------------------------------------- #
+#                                   Constants                                  #
+# ---------------------------------------------------------------------------- #
 DEBUG = False
 
 
+# ---------------------------------------------------------------------------- #
+#                            Monte Carlo Tree Search                           #
+# ---------------------------------------------------------------------------- #
 class MCTSNode:
     id_iter = itertools.count()
 
@@ -27,7 +36,7 @@ class MCTSNode:
         self.children[action] = child
 
 
-def UctSearch(params, n_actions, environment, iterations=100, debug=False, node=None, all_nodes=None, C_p=None, lookahead_target=None):
+def UctSearch(params, n_actions, environment, iterations=100, node=None,  C_p=None, lookahead_target=None):
     if C_p == None:
         C_p = 200
     if lookahead_target == None:
@@ -43,7 +52,7 @@ def UctSearch(params, n_actions, environment, iterations=100, debug=False, node=
     while True:
         v = TreePolicy(root_node, C_p, n_actions, environment)
         max_depth = max(v.depth - root_node.depth, max_depth)
-        Delta = DefaultPolicy(v, root_node.depth, environment)
+        Delta = DefaultPolicy(v, environment)
         Backup(v, Delta, root_node)
         counter += 1
         ix += 1
@@ -54,12 +63,12 @@ def UctSearch(params, n_actions, environment, iterations=100, debug=False, node=
     else:
         C_p = C_p + 1
     print(
-        f"### max_depth: {max_depth}, lookahead_target: {lookahead_target} ")
+        f"### max_depth: {max_depth:03}, lookahead_target: {lookahead_target:03} ")
     print(f"### C_p: {C_p} ")
     print("### Maximal depth considered: ", max_depth)
-    for action, child in root_node.children.items():
+    for action, child in sorted(root_node.children.items()):
         print(
-            f"### action: {action}, Q: {child.Q}, N: {child.N}, Q/N: {child.Q/child.N}")
+            f"### action: {action}, Q: {int(child.Q):08}, N: {child.N:08}, Q/N: {child.Q/child.N:07.2f}")
 
     best_child = max(root_node.children.values(), key=lambda x: x.N)
     best_child_action = best_child.action
@@ -67,7 +76,7 @@ def UctSearch(params, n_actions, environment, iterations=100, debug=False, node=
     print(f"### chosen action: {best_child_action}")
 
     best_child_node = max(root_node.children.values(), key=lambda x: x.N)
-    return (best_child_node.action, best_child_node, all_nodes, C_p)
+    return (best_child_node.action, best_child_node, C_p)
 
 
 def TreePolicy(node, C_p, n_actions, environment):
@@ -107,7 +116,7 @@ def BestChild(node, c, random=False):
     return am
 
 
-def DefaultPolicy(node, root_depth, environment):
+def DefaultPolicy(node, environment):
     exp_env = gym.make(environment)
     exp_env.reset()
     exp_env.unwrapped.state = np.array(node.params)
@@ -128,3 +137,13 @@ def Backup(node, Delta, root_node):
         node.N += 1
         node.Q = node.Q + Delta
         node = node.parent
+
+
+class MCTSAgent(object):
+    def __init__(self, time_budget, environment):
+        self.agenttype = 'mcts'
+        self.time_budget = time_budget
+        self.environment = environment
+
+    def act(self, params, n_actions, node, C_p, lookahead_target):
+        return UctSearch(params, n_actions, self.environment, self.time_budget, node=node, C_p=C_p, lookahead_target=lookahead_target)
