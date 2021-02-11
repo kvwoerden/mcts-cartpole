@@ -1,0 +1,1 @@
+gym==0.17.3 # In 0.18.0 the video recorder does not work
